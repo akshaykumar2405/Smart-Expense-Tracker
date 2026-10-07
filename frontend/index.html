@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Expense Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-wallet wallet-icon"></i>
+                <h2>Expense Tracker</h2>
+                <button type="button" class="toggle-sidebar" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+
+            <div class="sidebar-menu">
+                <a href="#" class="menu-item active" onclick="switchTab('dashboard')">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="menu-item" onclick="switchTab('expenses')">
+                    <i class="fas fa-history"></i>
+                    <span>Expense History</span>
+                </a>
+                <a href="#" class="menu-item" onclick="switchTab('budget')">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Budget Planning</span>
+                </a>
+                <a href="#" class="menu-item" onclick="switchTab('goals')">
+                    <i class="fas fa-bullseye"></i>
+                    <span>Savings Goals</span>
+                </a>
+                <a href="#" class="menu-item" onclick="switchTab('ai')">
+                    <i class="fas fa-robot"></i>
+                    <span>AI Assistant</span>
+                </a>
+                <a href="#" class="menu-item" onclick="switchTab('heatmap')">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Spending Heatmap</span>
+                </a>
+                <a href="#" class="menu-item" onclick="switchTab('patterns')">
+                    <i class="fas fa-brain"></i>
+                    <span>Behavior Analysis</span>
+                </a>
+                <a href="#" class="menu-item" onclick="switchTab('visualize')">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Visualize Trends</span>
+                </a>
+                <a href="#" class="menu-item" onclick="switchTab('achievements')">
+                    <i class="fas fa-trophy"></i>
+                    <span>Achievements</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="main-header">
+                <div class="header-left">
+                    <button type="button" class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle mobile menu">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="header-title">
+                        <h1 id="pageTitle">Dashboard</h1>
+                        <p id="pageDescription">Track and analyze your expenses</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button type="button" class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode" aria-label="Toggle dark mode">
+                        <i class="fas fa-moon" id="theme-icon"></i>
+                    </button>
+                    <div id="userSection" class="user-section">
+                        <!-- User info will be populated by JavaScript -->
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="exportToExcel()">
+                        <i class="fas fa-file-excel"></i>
+                        <span class="btn-text">Export</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Dashboard Tab -->
+                <div id="dashboard" class="tab-content active">
+                    <div class="stats-container">
+                        <div class="stat-card">
+                            <h3><i class="fas fa-chart-line"></i> Total Expenses</h3>
+                            <div class="value" id="totalExpenses">₹0.00</div>
+                            <div class="trend">All time</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <h3><i class="fas fa-tags"></i> Categories</h3>
+                            <div class="value" id="categoryCount">0</div>
+                            <div class="trend">Unique categories</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <h3><i class="fas fa-clock"></i> Recent</h3>
+                            <div class="value" id="recentExpenses">0</div>
+                            <div class="trend">Last 7 days</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <h3><i class="fas fa-calendar-day"></i> Today</h3>
+                            <div class="value" id="todayExpenses">₹0.00</div>
+                            <div class="trend">Today's spending</div>
+                        </div>
+                    </div>
+
+                    <!-- Add Expense Form -->
+                    <div class="form-container">
+                        <h3 class="section-header">
+                            <i class="fas fa-plus-circle"></i> Add New Expense
+                        </h3>
+                        <form id="expenseForm">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="date">Date</label>
+                                    <input type="date" id="date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="category">Category</label>
+                                    <select id="category" required>
+                                        <option value="">Select Category</option>
+                                        <option value="Food">🍽️ Food</option>
+                                        <option value="Transport">🚗 Transport</option>
+                                        <option value="Shopping">🛍️ Shopping</option>
+                                        <option value="Entertainment">🎬 Entertainment</option>
+                                        <option value="Bills">📄 Bills</option>
+                                        <option value="Healthcare">🏥 Healthcare</option>
+                                        <option value="Education">📚 Education</option>
+                                        <option value="Other">📦 Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="amount">Amount (₹)</label>
+                                    <input type="number" id="amount" step="0.01" min="0" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="description">Description</label>
+                                    <input type="text" id="description" placeholder="Optional description">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="isRecurring" class="checkbox-input">
+                                    Recurring Expense
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Add Expense
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Quick Stats Chart -->
+                    <div class="form-container">
+                        <h3 class="section-header">
+                            <i class="fas fa-chart-pie"></i> Category Breakdown
+                        </h3>
+                        <div class="dashboard-chart-container">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expense History Tab -->
+                <div id="expenses" class="tab-content">
+                    <div class="form-container">
+                        <div class="flex-header">
+                            <h3 class="section-header">
+                                <i class="fas fa-history"></i> Expense History
+                            </h3>
+                            <div class="filter-controls">
+                                <select id="filterPeriod" class="form-control filter-select">
+                                    <option value="all">All Time</option>
+                                    <option value="month">This Month</option>
+                                    <option value="week">This Week</option>
+                                </select>
+                                <select id="sortBy" class="form-control filter-select">
+                                    <option value="date">Sort by Date</option>
+                                    <option value="amount">Sort by Amount</option>
+                                    <option value="category">Sort by Category</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <div class="table-responsive">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Category</th>
+                                            <th>Description</th>
+                                            <th>Amount</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="expenseTableBody">
+                                        <!-- Expenses will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Budget Planning Tab -->
+                <div id="budget" class="tab-content">
+                    <div class="form-container">
+                        <h3 class="section-header">
+                            <i class="fas fa-chart-pie"></i> Budget Planning
+                        </h3>
+                        <p class="section-description">
+                            Set monthly budgets for different categories and track your spending.
+                        </p>
+
+                        <!-- Budget Form -->
+                        <div class="budget-form">
+                            <h4>Set New Budget</h4>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="budgetCategory">Category</label>
+                                    <select id="budgetCategory" required>
+                                        <option value="">Select Category</option>
+                                        <option value="Food">🍽️ Food</option>
+                                        <option value="Transport">🚗 Transport</option>
+                                        <option value="Shopping">🛍️ Shopping</option>
+                                        <option value="Entertainment">🎬 Entertainment</option>
+                                        <option value="Bills">📄 Bills</option>
+                                        <option value="Healthcare">🏥 Healthcare</option>
+                                        <option value="Education">📚 Education</option>
+                                        <option value="Other">📦 Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="budgetAmount">Monthly Budget (₹)</label>
+                                    <input type="number" id="budgetAmount" step="100" min="0" required>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="setBudget()">
+                                <i class="fas fa-plus"></i> Set Budget
+                            </button>
+                        </div>
+
+                        <!-- Budget List -->
+                        <div class="budget-section">
+                            <h4>Current Budgets</h4>
+                            <div id="budgetList">
+                                <!-- Budget items will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Savings Goals Tab -->
+                <div id="goals" class="tab-content">
+                    <div class="form-container">
+                        <h3 class="section-header">
+                            <i class="fas fa-bullseye"></i> Savings Goals
+                        </h3>
+                        <p class="section-description">
+                            Create and track your savings goals to achieve your financial targets.
+                        </p>
+
+                        <!-- Goals Form -->
+                        <div class="goals-form">
+                            <h4>Create New Goal</h4>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="goalName">Goal Name</label>
+                                    <input type="text" id="goalName" placeholder="e.g., Emergency Fund" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="goalTarget">Target Amount (₹)</label>
+                                    <input type="number" id="goalTarget" step="100" min="0" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="goalCurrent">Current Amount (₹)</label>
+                                    <input type="number" id="goalCurrent" step="100" min="0" value="0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="goalDeadline">Deadline (Optional)</label>
+                                    <input type="date" id="goalDeadline">
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="addSavingsGoal()">
+                                <i class="fas fa-plus"></i> Create Goal
+                            </button>
+                        </div>
+
+                        <!-- Goals List -->
+                        <div class="goals-section">
+                            <h4>Your Goals</h4>
+                            <div id="goalsList">
+                                <!-- Goals will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Assistant Tab -->
+                <div id="ai" class="tab-content">
+                    <div class="form-container">
+                        <h3 class="section-header">
+                            <i class="fas fa-robot"></i> AI Financial Assistant
+                        </h3>
+
+                        <!-- AI Actions -->
+                        <div class="ai-actions">
+                            <button type="button" class="btn btn-primary" onclick="getAISuggestions()">
+                                <i class="fas fa-magic"></i> Get Smart Suggestions
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="getBudgetTips()">
+                                <i class="fas fa-piggy-bank"></i> Budget Tips
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="forecastSpending()">
+                                <i class="fas fa-crystal-ball"></i> Forecast Spending
+                            </button>
+                        </div>
+
+                        <!-- AI Content -->
+                        <div id="aiContent" class="ai-content">
+                            <div class="ai-placeholder">
+                                <i class="fas fa-robot"></i>
+                                <p>Click a button above to get AI-powered financial insights!</p>
+                            </div>
+                        </div>
+
+                        <!-- Analysis Content -->
+                        <div class="analysis-section">
+                            <h4>Spending Analysis</h4>
+                            <div id="analyzeContent" class="analyze-content">
+                                <p>Analysis will appear here after getting AI suggestions.</p>
+                            </div>
+                        </div>
+
+                        <!-- Natural Language Search -->
+                        <div class="nl-search-section">
+                            <h4>Smart Search</h4>
+                            <div class="nl-search-form">
+                                <input type="text" id="nlQuery" placeholder="Ask about your expenses... e.g., 'food expenses last month'">
+                                <button type="button" class="btn btn-primary" onclick="naturalLanguageSearch()">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                            </div>
+                            <div id="nlResults" class="nl-results">
+                                <!-- Search results will appear here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Spending Heatmap Tab -->
+                <div id="heatmap" class="tab-content">
+                    <div class="form-container">
+                        <h3 class="section-header">
+                            <i class="fas fa-calendar-alt"></i> Spending Heatmap
+                        </h3>
+                        <p class="section-description">
+                            Visualize your daily spending patterns with an interactive calendar heatmap.
+                        </p>
+
+                        <!-- Heatmap Controls -->
+                        <div class="heatmap-controls">
+                            <button type="button" class="btn btn-secondary" onclick="changeHeatmapMonth(-1)">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </button>
+                            <h4 id="heatmapTitle">Loading...</h4>
+                            <button type="button" class="btn btn-secondary" onclick="changeHeatmapMonth(1)">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+
+                        <!-- Color Theme Selector -->
+                        <div class="heatmap-theme-selector">
+                            <label>Color Theme:</label>
+                            <select id="heatmapTheme" onchange="changeHeatmapTheme()">
+                                <option value="green">Green (GitHub Style)</option>
+                                <option value="blue">Blue Ocean</option>
+                                <option value="purple">Purple Gradient</option>
+                                <option value="orange">Orange Sunset</option>
+                                <option value="red">Red Heat</option>
+                            </select>
+                        </div>
+
+                        <!-- Heatmap Calendar -->
+                        <div class="heatmap-container">
+                            <table class="heatmap-calendar">
+                                <thead>
+                                    <tr>
+                                        <th>Sun</th>
+                                        <th>Mon</th>
+                                        <th>Tue</th>
+                                        <th>Wed</th>
+                                        <th>Thu</th>
+                                        <th>Fri</th>
+                                        <th>Sat</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="heatmapBody">
+                                    <!-- Calendar days will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Heatmap Legend -->
+                        <div class="heatmap-legend">
+                            <span>Less</span>
+                            <div class="legend-colors">
+                                <div class="legend-color legend-color-0"></div>
+                                <div class="legend-color legend-color-1"></div>
+                                <div class="legend-color legend-color-2"></div>
+                                <div class="legend-color legend-color-3"></div>
+                                <div class="legend-color legend-color-4"></div>
+                            </div>
+                            <span>More</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Behavior Analysis Tab -->
+                <div id="patterns" class="tab-content">
+                    <div class="form-container">
+                        <h3 class="section-header">
+                            <i class="fas fa-brain"></i> Behavior Analysis
+                        </h3>
+
+                        <!-- Analysis Actions -->
+                        <div class="analysis-actions">
+                            <button type="button" class="btn btn-primary" onclick="analyzePatterns()">
+                                <i class="fas fa-search"></i> Analyze Spending Patterns
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="getPredictions()">
+                                <i class="fas fa-crystal-ball"></i> Get Predictions
+                            </button>
+                        </div>
+
+                        <!-- Patterns List -->
+                        <div class="patterns-section">
+                            <h4>Spending Patterns</h4>
+                            <div id="patternsList" class="patterns-list">
+                                <p>Click "Analyze Spending Patterns" to see insights about your spending behavior.</p>
+                            </div>
+                        </div>
+
+                        <!-- Predictions List -->
+                        <div class="predictions-section">
+                            <h4>Future Predictions</h4>
+                            <div id="predictionsList" class="predictions-list">
+                                <p>Click "Get Predictions" to see forecasts for your future spending.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visualize Trends Tab -->
+                <div id="visualize" class="tab-content">
+                    <div class="form-container">
+                        <h3 class="section-header">
+                            <i class="fas fa-chart-line"></i> Visualize Trends
+                        </h3>
+                        <p class="section-description">
+                            Interactive charts and graphs to visualize your spending trends over time.
+                        </p>
+
+                        <!-- Chart Controls -->
+                        <div class="chart-controls">
+                            <div class="chart-period-buttons">
+                                <button type="button" id="weekBtn" class="btn btn-secondary active" onclick="updateChartPeriod('week')">
+                                    Week
+                                </button>
+                                <button type="button" id="monthBtn" class="btn btn-secondary" onclick="updateChartPeriod('month')">
+                                    Month
+                                </button>
+                                <button type="button" id="yearBtn" class="btn btn-secondary" onclick="updateChartPeriod('year')">
+                                    Year
+                                </button>
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="refreshCharts()">
+                                <i class="fas fa-sync-alt"></i> Refresh Charts
+                            </button>
+                        </div>
+
+                        <!-- Charts Grid -->
+                        <div class="charts-grid">
+                            <div class="chart-container">
+                                <h4>Spending Over Time</h4>
+                                <canvas id="timeChart"></canvas>
+                            </div>
+
+                            <div class="chart-container">
+                                <h4>Monthly Trends</h4>
+                                <canvas id="monthlyChart"></canvas>
+                            </div>
+
+                            <div class="chart-container">
+                                <h4>Top Categories (Polar)</h4>
+                                <canvas id="topCategoriesChart"></canvas>
+                            </div>
+
+                            <div class="chart-container">
+                                <h4>Top Categories (Bar)</h4>
+                                <canvas id="topCategoriesBarChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Achievements Tab -->
+                <div id="achievements" class="tab-content">
+                    <div class="form-container">
+                        <h3 class="section-header">
+                            <i class="fas fa-trophy"></i> Achievements
+                        </h3>
+                        <p class="section-description">
+                            Track your financial milestones and earn badges for good spending habits.
+                        </p>
+
+                        <!-- Spending Score Section -->
+                        <div class="spending-score-section">
+                            <h4>Financial Health Score</h4>
+                            <div class="score-container">
+                                <div class="score-circle" id="scoreCircleAchievements">
+                                    <div class="score-value" id="scoreValueAchievements">0</div>
+                                    <div class="score-label">Score</div>
+                                </div>
+                                <div class="score-details">
+                                    <div class="score-rating" id="scoreRatingAchievements">Good</div>
+                                    <p>Based on your spending patterns and habits</p>
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="loadSpendingScore()">
+                                        <i class="fas fa-sync-alt"></i> Update Score
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Achievements Grid -->
+                        <div id="achievementsGrid" class="achievements-grid">
+                            <div class="achievements-placeholder">
+                                <i class="fas fa-trophy"></i>
+                                <p>Your achievements will appear here as you track expenses and reach milestones!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Expense</h3>
+                <button type="button" class="modal-close" onclick="closeEditModal()" aria-label="Close modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="editExpenseForm">
+                <input type="hidden" id="editExpenseId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="editDate">Date</label>
+                        <input type="date" id="editDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editCategory">Category</label>
+                        <select id="editCategory" required>
+                            <option value="">Select Category</option>
+                            <option value="Food">🍽️ Food</option>
+                            <option value="Transport">🚗 Transport</option>
+                            <option value="Shopping">🛍️ Shopping</option>
+                            <option value="Entertainment">🎬 Entertainment</option>
+                            <option value="Bills">📄 Bills</option>
+                            <option value="Healthcare">🏥 Healthcare</option>
+                            <option value="Education">📚 Education</option>
+                            <option value="Other">📦 Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editAmount">Amount (₹)</label>
+                        <input type="number" id="editAmount" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editDescription">Description</label>
+                        <input type="text" id="editDescription" placeholder="Optional description">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="./js/script.js"></script>
+</body>
+</html>
